@@ -1,6 +1,8 @@
 import {
 	ICredentialType,
 	INodeProperties,
+	ICredentialTestRequest,
+	IAuthenticateGeneric,
 } from 'n8n-workflow';
 
 export class TelegraphApi implements ICredentialType {
@@ -17,7 +19,15 @@ export class TelegraphApi implements ICredentialType {
 			default: '',
 		},
 	];
-	test = {
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
+		properties: {
+			qs: {
+				access_token: '={{$credentials.accessToken}}',
+			},
+		},
+	};
+	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.telegra.ph',
 			url: '/getAccountInfo',
