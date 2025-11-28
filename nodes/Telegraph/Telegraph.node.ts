@@ -26,6 +26,21 @@ export class Telegraph implements INodeType {
 			{
 				name: 'telegraphApi',
 				required: true,
+				displayOptions: {
+					show: {
+						resource: ['page'],
+					},
+				},
+			},
+			{
+				name: 'telegraphApi',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['account'],
+						operation: ['edit', 'get', 'revokeAccessToken'],
+					},
+				},
 			},
 		],
 		properties: [
