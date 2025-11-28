@@ -12,7 +12,7 @@ export class Telegraph implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Telegraph',
 		name: 'telegraph',
-		icon: 'fa:paper-plane',
+		icon: 'file:telegraph.svg',
 		group: ['transform'],
 		version: 1,
 		description: 'Consume Telegraph API',
@@ -21,6 +21,7 @@ export class Telegraph implements INodeType {
 		},
 		inputs: ['main'],
 		outputs: ['main'],
+		usableAsTool: true,
 		credentials: [
 			{
 				name: 'telegraphApi',
@@ -198,8 +199,8 @@ export class Telegraph implements INodeType {
 				type: 'multiOptions',
 				options: [
 					{
-						name: 'Short Name',
-						value: 'short_name',
+						name: 'Auth URL',
+						value: 'auth_url',
 					},
 					{
 						name: 'Author Name',
@@ -210,12 +211,12 @@ export class Telegraph implements INodeType {
 						value: 'author_url',
 					},
 					{
-						name: 'Auth URL',
-						value: 'auth_url',
-					},
-					{
 						name: 'Page Count',
 						value: 'page_count',
+					},
+					{
+						name: 'Short Name',
+						value: 'short_name',
 					},
 				],
 				default: ['short_name', 'author_name', 'author_url'],
@@ -314,7 +315,7 @@ export class Telegraph implements INodeType {
 				name: 'limit',
 				type: 'number',
 				typeOptions: {
-					minValue: 0,
+					minValue: 1,
 					maxValue: 200,
 				},
 				default: 50,
@@ -324,7 +325,7 @@ export class Telegraph implements INodeType {
 						operation: ['getAll'],
 					},
 				},
-				description: 'Limits the number of pages to be retrieved',
+				description: 'Max number of results to return',
 			},
 			{
 				displayName: 'Offset',
@@ -414,7 +415,6 @@ export class Telegraph implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				let responseData;
 				const qs: IDataObject = {};
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
@@ -507,27 +507,24 @@ export class Telegraph implements INodeType {
 						if (day) qs.day = day;
 						const hour = this.getNodeParameter('hour', i) as number;
 						if (hour) qs.hour = hour;
-					}
 				}
+			}
 
-				responseData = await this.helpers.request({
+				const responseData = await this.helpers.httpRequest({
 					method,
-					uri: `https://api.telegra.ph/${endpoint}`,
+					url: `https://api.telegra.ph/${endpoint}`,
 					qs,
-					json: true,
 				});
 
-				if (!responseData.ok) {
-					throw new NodeOperationError(this.getNode(), `Telegraph API Error: ${responseData.error}`);
-				}
+					if (!responseData.ok) {
+						throw new NodeOperationError(this.getNode(), `Telegraph API Error: ${responseData.error}`);
+					}
 
-				const executionData = this.helpers.constructExecutionMetaData(
-					this.helpers.returnJsonArray(responseData.result as IDataObject),
-					{ itemData: { item: i } },
-				);
-				returnData.push(...executionData);
-
-			} catch (error) {
+					const executionData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray(responseData.result as IDataObject),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionData);			} catch (error) {
 				if (this.continueOnFail()) {
 					returnData.push({ json: { error: error.message } });
 					continue;
