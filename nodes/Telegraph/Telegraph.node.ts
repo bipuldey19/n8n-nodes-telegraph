@@ -26,7 +26,12 @@ export class Telegraph implements INodeType {
 		credentials: [
 			{
 				name: 'telegraphApi',
-				required: false,
+				required: true,
+				displayOptions: {
+					hide: {
+						resource: ['createAccount'],
+					},
+				},
 			},
 		],
 		properties: [
@@ -41,6 +46,10 @@ export class Telegraph implements INodeType {
 						value: 'account',
 					},
 					{
+						name: 'Create Account',
+						value: 'createAccount',
+					},
+					{
 						name: 'Page',
 						value: 'page',
 					},
@@ -48,7 +57,6 @@ export class Telegraph implements INodeType {
 				default: 'page',
 			},
 			{
-
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
@@ -59,12 +67,6 @@ export class Telegraph implements INodeType {
 					},
 				},
 				options: [
-					{
-						name: 'Create',
-						value: 'create',
-						description: 'Create a new Telegraph account',
-						action: 'Create an account',
-					},
 					{
 						name: 'Edit',
 						value: 'edit',
@@ -84,7 +86,7 @@ export class Telegraph implements INodeType {
 						action: 'Revoke access token',
 					},
 				],
-				default: 'create',
+				default: 'get',
 			},
 			{
 				displayName: 'Operation',
@@ -138,8 +140,7 @@ export class Telegraph implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['account'],
-						operation: ['create'],
+						resource: ['createAccount'],
 					},
 				},
 				description: 'Account name, helps users with several accounts remember which they are currently using',
@@ -164,8 +165,20 @@ export class Telegraph implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
+						resource: ['createAccount'],
+					},
+				},
+				description: 'Default author name used when creating new articles',
+			},
+			{
+				displayName: 'Author Name',
+				name: 'author_name',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
 						resource: ['account'],
-						operation: ['create', 'edit'],
+						operation: ['edit'],
 					},
 				},
 				description: 'Default author name used when creating new articles',
@@ -177,8 +190,20 @@ export class Telegraph implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
+						resource: ['createAccount'],
+					},
+				},
+				description: 'Default profile link',
+			},
+			{
+				displayName: 'Author URL',
+				name: 'author_url',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
 						resource: ['account'],
-						operation: ['create', 'edit'],
+						operation: ['edit'],
 					},
 				},
 				description: 'Default profile link',
@@ -469,36 +494,28 @@ export class Telegraph implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
 
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const qs: IDataObject = {};
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
-				const needsCredentials = !(resource === 'account' && operation === 'create');
 				
-				if (needsCredentials) {
-					try {
-						const credentials = await this.getCredentials('telegraphApi');
-						if (!credentials || !credentials.accessToken) {
-							throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
-						}
-						qs.access_token = credentials.accessToken as string;
-					} catch {
-						throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
-					}
+				if (resource !== 'createAccount') {
+					const credentials = await this.getCredentials('telegraphApi');
+					qs.access_token = credentials.accessToken as string;
 				}
 
-				if (resource === 'account') {
-					if (operation === 'create') {
-						endpoint = 'createAccount';
-						qs.short_name = this.getNodeParameter('short_name', i) as string;
-						const authorName = this.getNodeParameter('author_name', i) as string;
-						if (authorName) qs.author_name = authorName;
-						const authorUrl = this.getNodeParameter('author_url', i) as string;
-						if (authorUrl) qs.author_url = authorUrl;
-					} else if (operation === 'edit') {
+				if (resource === 'createAccount') {
+					endpoint = 'createAccount';
+					qs.short_name = this.getNodeParameter('short_name', i) as string;
+					const authorName = this.getNodeParameter('author_name', i) as string;
+					if (authorName) qs.author_name = authorName;
+					const authorUrl = this.getNodeParameter('author_url', i) as string;
+					if (authorUrl) qs.author_url = authorUrl;
+				} else if (resource === 'account') {
+					const operation = this.getNodeParameter('operation', 0) as string;
+					if (operation === 'edit') {
 						endpoint = 'editAccountInfo';
 						const shortName = this.getNodeParameter('short_name', i) as string;
 						if (shortName) qs.short_name = shortName;
@@ -514,12 +531,11 @@ export class Telegraph implements INodeType {
 						endpoint = 'revokeAccessToken';
 					}
 				} else if (resource === 'page') {
+					const operation = this.getNodeParameter('operation', 0) as string;
 					if (operation === 'create') {
 						endpoint = 'createPage';
 						method = 'POST';
 						qs.title = this.getNodeParameter('title', i) as string;
-						
-						// Handle different content formats
 						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
 						let content: unknown;
 						if (contentFormat === 'markdown') {
@@ -532,7 +548,6 @@ export class Telegraph implements INodeType {
 							content = this.getNodeParameter('content', i);
 						}
 						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
-						
 						const authorName = this.getNodeParameter('author_name', i) as string;
 						if (authorName) qs.author_name = authorName;
 						const authorUrl = this.getNodeParameter('author_url', i) as string;
@@ -545,7 +560,6 @@ export class Telegraph implements INodeType {
 						method = 'POST';
 						const path = this.getNodeParameter('path', i) as string;
 						endpoint = `${endpoint}/${path}`;
-						
 						qs.title = this.getNodeParameter('title', i) as string;
 						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
 						let content: unknown;
