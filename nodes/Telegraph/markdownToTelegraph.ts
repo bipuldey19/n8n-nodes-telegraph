@@ -1,8 +1,3 @@
-/**
- * Converts Markdown text to Telegraph Node format
- * Supports: headings, bold, italic, strikethrough, links, code, blockquotes, lists, images, horizontal rules
- */
-
 type TelegraphNode = string | {
 	tag: string;
 	attrs?: { [key: string]: string };
@@ -17,45 +12,39 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 	while (i < lines.length) {
 		const line = lines[i];
 
-		// Skip empty lines
 		if (line.trim() === '') {
 			i++;
 			continue;
 		}
 
-		// Horizontal rule
 		if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
 			result.push({ tag: 'hr' });
 			i++;
 			continue;
 		}
 
-		// Headings
 		const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
 		if (headingMatch) {
 			const level = headingMatch[1].length;
 			const text = headingMatch[2];
-			// Telegraph only supports h3 and h4
 			const tag = level <= 3 ? 'h3' : 'h4';
 			result.push({ tag, children: parseInline(text) });
 			i++;
 			continue;
 		}
 
-		// Code block (fenced)
 		if (line.trim().startsWith('```')) {
 			const codeLines: string[] = [];
-			i++; // Skip opening ```
+			i++;
 			while (i < lines.length && !lines[i].trim().startsWith('```')) {
 				codeLines.push(lines[i]);
 				i++;
 			}
-			i++; // Skip closing ```
+			i++;
 			result.push({ tag: 'pre', children: [codeLines.join('\n')] });
 			continue;
 		}
 
-		// Blockquote
 		if (line.trim().startsWith('>')) {
 			const quoteLines: string[] = [];
 			while (i < lines.length && lines[i].trim().startsWith('>')) {
@@ -66,7 +55,6 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Unordered list
 		if (/^[*\-+]\s+/.test(line.trim())) {
 			const listItems: TelegraphNode[] = [];
 			while (i < lines.length && /^[*\-+]\s+/.test(lines[i].trim())) {
@@ -78,7 +66,6 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Ordered list
 		if (/^\d+\.\s+/.test(line.trim())) {
 			const listItems: TelegraphNode[] = [];
 			while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
@@ -90,7 +77,6 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Image (standalone)
 		const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
 		if (imageMatch) {
 			const alt = imageMatch[1];
@@ -110,7 +96,6 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Regular paragraph
 		const paragraphLines: string[] = [];
 		while (
 			i < lines.length &&
@@ -128,15 +113,11 @@ export function markdownToTelegraph(markdown: string): TelegraphNode[] {
 	return result;
 }
 
-/**
- * Parse inline markdown elements (bold, italic, links, code, etc.)
- */
 function parseInline(text: string): TelegraphNode[] {
 	const result: TelegraphNode[] = [];
 	let remaining = text;
 
 	while (remaining.length > 0) {
-		// Bold + Italic (***text*** or ___text___)
 		let match = remaining.match(/^(\*{3}|_{3})(.+?)\1/);
 		if (match) {
 			result.push({
@@ -147,7 +128,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Bold (**text** or __text__)
 		match = remaining.match(/^(\*{2}|_{2})(.+?)\1/);
 		if (match) {
 			result.push({ tag: 'strong', children: parseInline(match[2]) });
@@ -155,7 +135,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Italic (*text* or _text_)
 		match = remaining.match(/^(\*|_)(.+?)\1/);
 		if (match) {
 			result.push({ tag: 'em', children: parseInline(match[2]) });
@@ -163,7 +142,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Strikethrough (~~text~~)
 		match = remaining.match(/^~~(.+?)~~/);
 		if (match) {
 			result.push({ tag: 's', children: parseInline(match[1]) });
@@ -171,7 +149,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Inline code (`code`)
 		match = remaining.match(/^`([^`]+)`/);
 		if (match) {
 			result.push({ tag: 'code', children: [match[1]] });
@@ -179,7 +156,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Link [text](url)
 		match = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
 		if (match) {
 			result.push({
@@ -191,7 +167,6 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Image ![alt](src) - inline
 		match = remaining.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
 		if (match) {
 			result.push({
@@ -202,30 +177,22 @@ function parseInline(text: string): TelegraphNode[] {
 			continue;
 		}
 
-		// Plain text - find next special character or end
 		const nextSpecial = remaining.search(/[*_~`[!]/);
 		if (nextSpecial === -1) {
-			// No more special characters, add rest as text
 			result.push(remaining);
 			break;
 		} else if (nextSpecial === 0) {
-			// Special character that didn't match any pattern, treat as text
 			result.push(remaining[0]);
 			remaining = remaining.slice(1);
 		} else {
-			// Add text before special character
 			result.push(remaining.slice(0, nextSpecial));
 			remaining = remaining.slice(nextSpecial);
 		}
 	}
 
-	// Merge adjacent strings
 	return mergeStrings(result);
 }
 
-/**
- * Merge adjacent string nodes
- */
 function mergeStrings(nodes: TelegraphNode[]): TelegraphNode[] {
 	const result: TelegraphNode[] = [];
 	let currentString = '';
@@ -249,15 +216,8 @@ function mergeStrings(nodes: TelegraphNode[]): TelegraphNode[] {
 	return result;
 }
 
-/**
- * Converts HTML to Telegraph Node format
- * Supports basic HTML tags
- */
 export function htmlToTelegraph(html: string): TelegraphNode[] {
 	const result: TelegraphNode[] = [];
-	
-	// Simple regex-based HTML parser
-	// Remove doctype, html, head, body tags
 	const content = html
 		.replace(/<!DOCTYPE[^>]*>/gi, '')
 		.replace(/<\/?html[^>]*>/gi, '')
@@ -265,14 +225,12 @@ export function htmlToTelegraph(html: string): TelegraphNode[] {
 		.replace(/<\/?body[^>]*>/gi, '')
 		.trim();
 
-	// Split by block-level tags
 	const blockRegex = /<(h[1-6]|p|pre|blockquote|ul|ol|figure|hr|aside)([^>]*)>([\s\S]*?)<\/\1>|<(hr|br)\s*\/?>/gi;
 	
 	let lastIndex = 0;
 	let match;
 
 	while ((match = blockRegex.exec(content)) !== null) {
-		// Check for text before this match
 		if (match.index > lastIndex) {
 			const textBefore = content.slice(lastIndex, match.index).trim();
 			if (textBefore) {
@@ -281,7 +239,6 @@ export function htmlToTelegraph(html: string): TelegraphNode[] {
 		}
 
 		if (match[4]) {
-			// Self-closing tag (hr, br)
 			if (match[4].toLowerCase() === 'hr') {
 				result.push({ tag: 'hr' });
 			}
@@ -292,7 +249,6 @@ export function htmlToTelegraph(html: string): TelegraphNode[] {
 			if (tag === 'hr') {
 				result.push({ tag: 'hr' });
 			} else if (tag.startsWith('h')) {
-				// Convert h1-h6 to h3 or h4
 				const level = parseInt(tag[1]);
 				const telegraphTag = level <= 3 ? 'h3' : 'h4';
 				result.push({ tag: telegraphTag, children: parseHtmlInline(innerContent) });
@@ -302,7 +258,6 @@ export function htmlToTelegraph(html: string): TelegraphNode[] {
 			} else if (tag === 'figure') {
 				result.push(parseFigure(innerContent));
 			} else if (tag === 'pre') {
-				// Strip inner code tags if present
 				const codeContent = innerContent.replace(/<\/?code[^>]*>/gi, '');
 				result.push({ tag: 'pre', children: [decodeHtmlEntities(codeContent)] });
 			} else {
@@ -313,7 +268,6 @@ export function htmlToTelegraph(html: string): TelegraphNode[] {
 		lastIndex = match.index + match[0].length;
 	}
 
-	// Check for remaining content
 	if (lastIndex < content.length) {
 		const remaining = content.slice(lastIndex).trim();
 		if (remaining) {
@@ -332,14 +286,12 @@ function parseHtmlInline(html: string): TelegraphNode[] {
 	let match;
 
 	while ((match = inlineRegex.exec(html)) !== null) {
-		// Text before this match
 		if (match.index > lastIndex) {
 			const text = decodeHtmlEntities(html.slice(lastIndex, match.index));
 			if (text) result.push(text);
 		}
 
 		if (match[4]) {
-			// Self-closing tag
 			if (match[4].toLowerCase() === 'img') {
 				const srcMatch = match[5].match(/src=["']([^"']+)["']/i);
 				if (srcMatch) {
@@ -351,7 +303,6 @@ function parseHtmlInline(html: string): TelegraphNode[] {
 			const attrs = match[2];
 			const inner = match[3];
 
-			// Map HTML tags to Telegraph tags
 			const tagMap: { [key: string]: string } = {
 				strong: 'strong',
 				b: 'b',
@@ -381,7 +332,6 @@ function parseHtmlInline(html: string): TelegraphNode[] {
 		lastIndex = match.index + match[0].length;
 	}
 
-	// Remaining text
 	if (lastIndex < html.length) {
 		const text = decodeHtmlEntities(html.slice(lastIndex));
 		if (text) result.push(text);

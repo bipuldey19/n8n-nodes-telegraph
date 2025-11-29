@@ -62,8 +62,8 @@ export class Telegraph implements INodeType {
 				],
 				default: 'page',
 			},
-			// Account Operations
 			{
+
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
@@ -101,7 +101,6 @@ export class Telegraph implements INodeType {
 				],
 				default: 'create',
 			},
-			// Page Operations
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -146,7 +145,6 @@ export class Telegraph implements INodeType {
 				],
 				default: 'create',
 			},
-			// Account Fields
 			{
 				displayName: 'Short Name',
 				name: 'short_name',
@@ -235,7 +233,6 @@ export class Telegraph implements INodeType {
 				},
 				description: 'List of account fields to return',
 			},
-			// Page Fields
 			{
 				displayName: 'Title',
 				name: 'title',
@@ -494,8 +491,6 @@ export class Telegraph implements INodeType {
 				const qs: IDataObject = {};
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
-
-				// Get credentials if needed
 				let accessToken = '';
 				if (!(resource === 'account' && operation === 'create')) {
 					const credentials = await this.getCredentials('telegraphApi');
@@ -560,8 +555,6 @@ export class Telegraph implements INodeType {
 						endpoint = `${endpoint}/${path}`;
 						
 						qs.title = this.getNodeParameter('title', i) as string;
-						
-						// Handle different content formats
 						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
 						let content: unknown;
 						if (contentFormat === 'markdown') {
@@ -574,7 +567,6 @@ export class Telegraph implements INodeType {
 							content = this.getNodeParameter('content', i);
 						}
 						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
-
 						const authorName = this.getNodeParameter('author_name', i) as string;
 						if (authorName) qs.author_name = authorName;
 						const authorUrl = this.getNodeParameter('author_url', i) as string;
