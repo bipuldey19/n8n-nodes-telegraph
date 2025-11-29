@@ -7,12 +7,13 @@ import {
 	IDataObject,
 	IHttpRequestMethods,
 } from 'n8n-workflow';
+import { markdownToTelegraph, htmlToTelegraph } from './markdownToTelegraph';
 
 export class Telegraph implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Telegraph',
 		name: 'telegraph',
-		icon: 'file:telegraph.svg',
+		icon: 'file:Telegraph.svg',
 		group: ['transform'],
 		version: 1,
 		description: 'Consume Telegraph API',
@@ -250,6 +251,74 @@ export class Telegraph implements INodeType {
 				description: 'Page title',
 			},
 			{
+				displayName: 'Content Format',
+				name: 'contentFormat',
+				type: 'options',
+				options: [
+					{
+						name: 'Markdown',
+						value: 'markdown',
+						description: 'Write content in Markdown format',
+					},
+					{
+						name: 'HTML',
+						value: 'html',
+						description: 'Write content in HTML format',
+					},
+					{
+						name: 'JSON (Telegraph Format)',
+						value: 'json',
+						description: 'Write content in Telegraph Node JSON format',
+					},
+				],
+				default: 'markdown',
+				displayOptions: {
+					show: {
+						resource: ['page'],
+						operation: ['create', 'edit'],
+					},
+				},
+				description: 'Format of the content input',
+			},
+			{
+				displayName: 'Content',
+				name: 'contentMarkdown',
+				type: 'string',
+				typeOptions: {
+					rows: 10,
+				},
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['page'],
+						operation: ['create', 'edit'],
+						contentFormat: ['markdown'],
+					},
+				},
+				description: 'Content in Markdown format. Supports: headings (#), bold (**), italic (*), links [text](URL), images ![alt](URL), lists, code blocks, blockquotes (>), and more.',
+				placeholder: '### My Article\n\nThis is a **bold** and *italic* text.\n\n- List item 1\n- List item 2\n\n> A blockquote\n\n[Link](https://example.com)',
+			},
+			{
+				displayName: 'Content',
+				name: 'contentHtml',
+				type: 'string',
+				typeOptions: {
+					rows: 10,
+				},
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['page'],
+						operation: ['create', 'edit'],
+						contentFormat: ['html'],
+					},
+				},
+				description: 'Content in HTML format',
+				placeholder: '<h3>My Article</h3>\n<p>This is a <strong>bold</strong> and <em>italic</em> text.</p>',
+			},
+			{
 				displayName: 'Content',
 				name: 'content',
 				type: 'json',
@@ -259,9 +328,10 @@ export class Telegraph implements INodeType {
 					show: {
 						resource: ['page'],
 						operation: ['create', 'edit'],
+						contentFormat: ['json'],
 					},
 				},
-				description: 'Content of the page (Array of Node)',
+				description: 'Content in Telegraph Node JSON format (Array of Node objects)',
 			},
 			{
 				displayName: 'Author Name',
@@ -461,7 +531,19 @@ export class Telegraph implements INodeType {
 						endpoint = 'createPage';
 						method = 'POST';
 						qs.title = this.getNodeParameter('title', i) as string;
-						const content = this.getNodeParameter('content', i);
+						
+						// Handle different content formats
+						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
+						let content: unknown;
+						if (contentFormat === 'markdown') {
+							const markdownContent = this.getNodeParameter('contentMarkdown', i) as string;
+							content = markdownToTelegraph(markdownContent);
+						} else if (contentFormat === 'html') {
+							const htmlContent = this.getNodeParameter('contentHtml', i) as string;
+							content = htmlToTelegraph(htmlContent);
+						} else {
+							content = this.getNodeParameter('content', i);
+						}
 						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
 						
 						const authorName = this.getNodeParameter('author_name', i) as string;
@@ -478,7 +560,19 @@ export class Telegraph implements INodeType {
 						endpoint = `${endpoint}/${path}`;
 						
 						qs.title = this.getNodeParameter('title', i) as string;
-						const content = this.getNodeParameter('content', i);
+						
+						// Handle different content formats
+						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
+						let content: unknown;
+						if (contentFormat === 'markdown') {
+							const markdownContent = this.getNodeParameter('contentMarkdown', i) as string;
+							content = markdownToTelegraph(markdownContent);
+						} else if (contentFormat === 'html') {
+							const htmlContent = this.getNodeParameter('contentHtml', i) as string;
+							content = htmlToTelegraph(htmlContent);
+						} else {
+							content = this.getNodeParameter('content', i);
+						}
 						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
 
 						const authorName = this.getNodeParameter('author_name', i) as string;
