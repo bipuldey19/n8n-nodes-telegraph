@@ -26,21 +26,7 @@ export class Telegraph implements INodeType {
 		credentials: [
 			{
 				name: 'telegraphApi',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['page'],
-					},
-				},
-			},
-			{
-				name: 'telegraphApi',
-				required: true,
-				displayOptions: {
-					show: {
-						operation: ['edit', 'get', 'revokeAccessToken'],
-					},
-				},
+				required: false,
 			},
 		],
 		properties: [
@@ -490,11 +476,18 @@ export class Telegraph implements INodeType {
 				const qs: IDataObject = {};
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
-				let accessToken = '';
-				if (!(resource === 'account' && operation === 'create')) {
-					const credentials = await this.getCredentials('telegraphApi');
-					accessToken = credentials.accessToken as string;
-					qs.access_token = accessToken;
+				const needsCredentials = !(resource === 'account' && operation === 'create');
+				
+				if (needsCredentials) {
+					try {
+						const credentials = await this.getCredentials('telegraphApi');
+						if (!credentials || !credentials.accessToken) {
+							throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
+						}
+						qs.access_token = credentials.accessToken as string;
+					} catch (error) {
+						throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
+					}
 				}
 
 				if (resource === 'account') {
