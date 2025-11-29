@@ -614,14 +614,16 @@ export class Telegraph implements INodeType {
 					method,
 					url: `https://api.telegra.ph/${endpoint}`,
 					qs,
+					json: true,
 				});
 
 					if (!responseData.ok) {
 						throw new NodeOperationError(this.getNode(), `Telegraph API Error: ${responseData.error}`);
 					}
 
+					const result = responseData.result as IDataObject;
 					const executionData = this.helpers.constructExecutionMetaData(
-						this.helpers.returnJsonArray(responseData.result as IDataObject),
+						this.helpers.returnJsonArray(result),
 						{ itemData: { item: i } },
 					);
 					returnData.push(...executionData);			} catch (error) {
