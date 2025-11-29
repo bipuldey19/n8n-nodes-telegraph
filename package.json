@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-telegraph",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Telegra.ph API integration for n8n",
 	"license": "MIT",
 	"homepage": "",
