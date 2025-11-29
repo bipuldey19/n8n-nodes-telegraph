@@ -42,12 +42,12 @@ export class Telegraph implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Account',
-						value: 'account',
-					},
-					{
 						name: 'Account Creation',
 						value: 'accountCreation',
+					},
+					{
+						name: 'Account',
+						value: 'account',
 					},
 					{
 						name: 'Page',

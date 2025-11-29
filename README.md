@@ -39,11 +39,16 @@ Then restart n8n.
 
 ## 🔧 Operations
 
+### Account Creation
+
+| Operation | Description |
+|-----------|-------------|
+| **Create** | Create a new Telegraph account (no credentials required) |
+
 ### Account
 
 | Operation | Description |
 |-----------|-------------|
-| **Create** | Create a new Telegraph account |
 | **Edit** | Update account information (short name, author name, author URL) |
 | **Get** | Retrieve account information |
 | **Revoke Access Token** | Revoke current access token and generate a new one |
@@ -60,14 +65,17 @@ Then restart n8n.
 
 ## 🔐 Credentials
 
-To use most operations, you'll need a Telegraph **Access Token**.
+To use **Account** and **Page** operations, you'll need a Telegraph **Access Token**.
 
 ### Getting an Access Token
 
-1. Use the **Account → Create** operation in n8n (no credentials required)
-2. From the response, open the `auth_url` in your browser / `get` request in n8n to activate the account
-3. Save the `access_token` from the response
-4. Create new credentials in n8n with this token
+1. Add the **Telegraph** node to your workflow
+2. From **Account Creation Actions** select **Create an account** (no credentials required)
+3. Enter a **Short Name** for your account
+4. Execute the node
+5. From the response, open the `auth_url` in your browser/`get` http request in n8n to activate the account
+6. Copy the `access_token` from the response
+7. Create new Telegraph credentials in n8n with this token
 
 > ⚠️ **Important:** You must visit the `auth_url` at least once to activate your account.
 
