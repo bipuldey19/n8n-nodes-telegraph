@@ -485,7 +485,7 @@ export class Telegraph implements INodeType {
 							throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
 						}
 						qs.access_token = credentials.accessToken as string;
-					} catch (error) {
+					} catch {
 						throw new NodeOperationError(this.getNode(), 'Telegraph API credentials are required for this operation. Please add your access token in the credentials.');
 					}
 				}
