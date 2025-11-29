@@ -65,11 +65,11 @@ To use most operations, you'll need a Telegraph **Access Token**.
 ### Getting an Access Token
 
 1. Use the **Account → Create** operation in n8n (no credentials required)
-2. From the response, open the `auth_url` in your browser to link the account to your Telegram
+2. From the response, open the `auth_url` in your browser / `get` request in n8n to activate the account
 3. Save the `access_token` from the response
 4. Create new credentials in n8n with this token
 
-> ⚠️ **Important:** You must visit the `auth_url` at least once to activate your account. This links the Telegraph account to your Telegram profile and enables all features.
+> ⚠️ **Important:** You must visit the `auth_url` at least once to activate your account.
 
 Or get one via API:
 ```bash
