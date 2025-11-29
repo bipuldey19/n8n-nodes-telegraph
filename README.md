@@ -43,7 +43,7 @@ Then restart n8n.
 
 | Operation | Description |
 |-----------|-------------|
-| **Create** | Create a new Telegraph account (no credentials required) |
+| **Create an account** | Create a new Telegraph account (no credentials required) |
 
 ### Account
 
@@ -73,7 +73,7 @@ To use **Account** and **Page** operations, you'll need a Telegraph **Access Tok
 2. From **Account Creation Actions** select **Create an account** (no credentials required)
 3. Enter a **Short Name** for your account
 4. Execute the node
-5. From the response, open the `auth_url` in your browser/`get` http request in n8n to activate the account
+5. From the response, open the `auth_url` in your browser / `get` http request in n8n to activate the account
 6. Copy the `access_token` from the response
 7. Create new Telegraph credentials in n8n with this token
 
