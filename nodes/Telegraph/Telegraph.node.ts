@@ -29,7 +29,7 @@ export class Telegraph implements INodeType {
 				required: true,
 				displayOptions: {
 					hide: {
-						resource: ['createAccount'],
+						resource: ['accountCreation'],
 					},
 				},
 			},
@@ -46,8 +46,8 @@ export class Telegraph implements INodeType {
 						value: 'account',
 					},
 					{
-						name: 'Create Account',
-						value: 'createAccount',
+						name: 'Account Creation',
+						value: 'accountCreation',
 					},
 					{
 						name: 'Page',
@@ -55,6 +55,26 @@ export class Telegraph implements INodeType {
 					},
 				],
 				default: 'page',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['accountCreation'],
+					},
+				},
+				options: [
+					{
+						name: 'Create',
+						value: 'create',
+						description: 'Create a new Telegraph account',
+						action: 'Create an account',
+					},
+				],
+				default: 'create',
 			},
 			{
 				displayName: 'Operation',
@@ -140,7 +160,7 @@ export class Telegraph implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						resource: ['createAccount'],
+						resource: ['accountCreation'],
 					},
 				},
 				description: 'Account name, helps users with several accounts remember which they are currently using',
@@ -165,7 +185,7 @@ export class Telegraph implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						resource: ['createAccount'],
+						resource: ['accountCreation'],
 					},
 				},
 				description: 'Default author name used when creating new articles',
@@ -190,7 +210,7 @@ export class Telegraph implements INodeType {
 				default: '',
 				displayOptions: {
 					show: {
-						resource: ['createAccount'],
+						resource: ['accountCreation'],
 					},
 				},
 				description: 'Default profile link',
@@ -501,12 +521,12 @@ export class Telegraph implements INodeType {
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
 				
-				if (resource !== 'createAccount') {
+				if (resource !== 'accountCreation') {
 					const credentials = await this.getCredentials('telegraphApi');
 					qs.access_token = credentials.accessToken as string;
 				}
 
-				if (resource === 'createAccount') {
+				if (resource === 'accountCreation') {
 					endpoint = 'createAccount';
 					qs.short_name = this.getNodeParameter('short_name', i) as string;
 					const authorName = this.getNodeParameter('author_name', i) as string;
