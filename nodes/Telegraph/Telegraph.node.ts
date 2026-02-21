@@ -518,9 +518,10 @@ export class Telegraph implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const qs: IDataObject = {};
+				const body: IDataObject = {};
 				let method: IHttpRequestMethods = 'GET';
 				let endpoint = '';
-				
+
 				if (resource !== 'accountCreation') {
 					const credentials = await this.getCredentials('telegraphApi');
 					qs.access_token = credentials.accessToken as string;
@@ -555,7 +556,9 @@ export class Telegraph implements INodeType {
 					if (operation === 'create') {
 						endpoint = 'createPage';
 						method = 'POST';
-						qs.title = this.getNodeParameter('title', i) as string;
+						// Send page payload in the POST body to avoid HTTP 414 errors
+						// caused by large content arrays in the URL query string
+						body.title = this.getNodeParameter('title', i) as string;
 						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
 						let content: unknown;
 						if (contentFormat === 'markdown') {
@@ -567,20 +570,23 @@ export class Telegraph implements INodeType {
 						} else {
 							content = this.getNodeParameter('content', i);
 						}
-						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
+						// Pass content as the actual array for application/json body
+						body.content = typeof content === 'string' ? JSON.parse(content) : content;
 						const authorName = this.getNodeParameter('author_name', i) as string;
-						if (authorName) qs.author_name = authorName;
+						if (authorName) body.author_name = authorName;
 						const authorUrl = this.getNodeParameter('author_url', i) as string;
-						if (authorUrl) qs.author_url = authorUrl;
+						if (authorUrl) body.author_url = authorUrl;
 						const returnContent = this.getNodeParameter('return_content', i) as boolean;
-						if (returnContent) qs.return_content = returnContent;
+						if (returnContent) body.return_content = returnContent;
 
 					} else if (operation === 'edit') {
 						endpoint = 'editPage';
 						method = 'POST';
 						const path = this.getNodeParameter('path', i) as string;
 						endpoint = `${endpoint}/${path}`;
-						qs.title = this.getNodeParameter('title', i) as string;
+						// Send page payload in the POST body to avoid HTTP 414 errors
+						// caused by large content arrays in the URL query string
+						body.title = this.getNodeParameter('title', i) as string;
 						const contentFormat = this.getNodeParameter('contentFormat', i) as string;
 						let content: unknown;
 						if (contentFormat === 'markdown') {
@@ -592,13 +598,14 @@ export class Telegraph implements INodeType {
 						} else {
 							content = this.getNodeParameter('content', i);
 						}
-						qs.content = typeof content === 'string' ? content : JSON.stringify(content);
+						// Pass content as the actual array for application/json body
+						body.content = typeof content === 'string' ? JSON.parse(content) : content;
 						const authorName = this.getNodeParameter('author_name', i) as string;
-						if (authorName) qs.author_name = authorName;
+						if (authorName) body.author_name = authorName;
 						const authorUrl = this.getNodeParameter('author_url', i) as string;
-						if (authorUrl) qs.author_url = authorUrl;
+						if (authorUrl) body.author_url = authorUrl;
 						const returnContent = this.getNodeParameter('return_content', i) as boolean;
-						if (returnContent) qs.return_content = returnContent;
+						if (returnContent) body.return_content = returnContent;
 
 					} else if (operation === 'get') {
 						endpoint = 'getPage';
@@ -616,7 +623,7 @@ export class Telegraph implements INodeType {
 						endpoint = 'getViews';
 						const path = this.getNodeParameter('path', i) as string;
 						endpoint = `${endpoint}/${path}`;
-						
+
 						const year = this.getNodeParameter('year', i) as number;
 						if (year) qs.year = year;
 						const month = this.getNodeParameter('month', i) as number;
@@ -625,13 +632,14 @@ export class Telegraph implements INodeType {
 						if (day) qs.day = day;
 						const hour = this.getNodeParameter('hour', i) as number;
 						if (hour) qs.hour = hour;
+					}
 				}
-			}
 
 				const responseData = await this.helpers.httpRequest({
 					method,
 					url: `https://api.telegra.ph/${endpoint}`,
 					qs,
+					...(method === 'POST' && { body }),
 					json: true,
 				});
 
